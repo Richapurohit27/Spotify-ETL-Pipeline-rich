@@ -4,7 +4,6 @@ from datetime import datetime
 from io import StringIO
 import pandas as pd
 
-# Function to extract album details from the JSON data
 def album(data):
     album_list = []
     for row in data['items']:
@@ -30,7 +29,6 @@ def album(data):
         album_list.append(album_element)
     return album_list
 
-# Function to extract artist details
 def artist(data):
     artist_list = []
     for row in data['items']:
@@ -43,7 +41,6 @@ def artist(data):
             artist_list.append(artist_dict)
     return artist_list
 
-# Function to extract track details
 def tracks(data):
     track_list = []
     for row in data['items']:
@@ -59,7 +56,6 @@ def tracks(data):
         track_list.append(tracks_dict)
     return track_list 
 
-# AWS Lambda function handler
 def lambda_handler(event, context):
     s3 = boto3.client('s3')
     Bucket = 'spotify-etl-rich'
@@ -68,7 +64,7 @@ def lambda_handler(event, context):
     spotify_data = []
     spotify_keys = []
 
-    # Get the list of objects from the S3 bucket
+    # Get the list of objects from the bucket
     response = s3.list_objects_v2(Bucket=Bucket, Prefix=Key)
 
     # Ensure 'Contents' exists in the response
@@ -101,21 +97,21 @@ def lambda_handler(event, context):
         artist_df = pd.DataFrame.from_dict(artist_list)
         track_df = pd.DataFrame.from_dict(tracks_list)
 
-        # Saving the track data to a CSV file and uploading to S3
+        # Saving the track data to a CSV file and upload to S3
         songs_key = f'transformed-data/songs_data/song_transformed_{timestamp}.csv'
         song_buffer = StringIO()
         track_df.to_csv(song_buffer, index=False)
         song_content = song_buffer.getvalue()
         s3.put_object(Bucket=Bucket, Key=songs_key, Body=song_content)
 
-        # Saving the album data to a CSV file and uploading to S3
+        # Saving the album data to CSV file and upload to S3
         album_key = f'transformed-data/album_data/album_transformed_{timestamp}.csv'
         album_buffer = StringIO()
         album_df.to_csv(album_buffer, index=False)
         album_content = album_buffer.getvalue()
         s3.put_object(Bucket=Bucket, Key=album_key, Body=album_content)
 
-        # Saving the artist data to a CSV file and uploading to S3
+        # Saving the artist data to CSV file and upload to S3
         artist_key = f'transformed-data/artist_data/artist_transformed_{timestamp}.csv'
         artist_buffer = StringIO()
         artist_df.to_csv(artist_buffer, index=False)
